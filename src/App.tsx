@@ -23,7 +23,7 @@ const DashboardViewer = lazy(() => import("./modules/dashboard/viewer/DashboardV
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const DynamicFormList = lazy(() => import("./modules/dynamicform/DynamicFormList"));
 const DynamicFormViewer = lazy(() => import("./modules/dynamicform/DynamicFormViewer"));
-
+const ChartShowcase = lazy(() => import("./pages/ChartShowcase"));
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -56,6 +56,9 @@ const App = () => (
               {/* Dynamic Forms */}
               <Route path="/dynamic-forms" element={<DynamicFormList />} />
               <Route path="/dynamic-forms/:id" element={<DynamicFormViewer />} />
+
+              {/* Chart Library Showcase */}
+              <Route path="/charts" element={<ChartShowcase />} />
 
               {/* User Management */}
               <Route path="/profile" element={<ProfilePage />} />
