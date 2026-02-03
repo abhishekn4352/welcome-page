@@ -1,5 +1,8 @@
 import API_BASE_URL from '../config';
 
+// Demo mode flag - enables mock responses when API is unreachable
+const DEMO_MODE = true;
+
 class ApiService {
     private getHeaders(contentType: string = 'application/json'): HeadersInit {
         const headers: HeadersInit = {
@@ -19,7 +22,15 @@ class ApiService {
         console.log(`[API Request] ${options.method || 'GET'} ${url}`, { options });
 
         try {
-            const response = await fetch(url, options);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
             console.log(`[API Response] ${response.status} ${url}`);
 
             // Handle 401 Unauthorized globally
@@ -27,7 +38,6 @@ class ApiService {
                 console.warn('[API] 401 Unauthorized - Redirecting to login');
                 if (!window.location.pathname.includes('/login')) {
                     localStorage.clear();
-                    alert('Session expired. Please login again.');
                     window.location.href = '/login';
                     throw new Error('Session expired');
                 }
@@ -44,6 +54,13 @@ class ApiService {
             return data as T;
         } catch (error: any) {
             console.error(`[API Exception] ${endpoint}:`, error);
+            
+            // Check if it's a network error and demo mode is enabled
+            if (DEMO_MODE && (error.name === 'TypeError' || error.name === 'AbortError')) {
+                console.warn('[API] Network error - Using demo mode');
+                throw new Error('API_UNAVAILABLE');
+            }
+            
             throw new Error(error.message || 'Network error');
         }
     }

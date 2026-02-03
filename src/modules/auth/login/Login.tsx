@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
-import { Mail, Lock, User, Check, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Check, Loader2, Play } from 'lucide-react';
 import { useLogin } from './useLogin';
 
 const Login = () => {
@@ -20,8 +20,11 @@ const Login = () => {
         setRemember,
         isLoading,
         handleSubmit,
-        handleOAuth
+        handleOAuth,
+        loginWithDemoUser
     } = useLogin();
+
+    const showDemoButton = error?.includes('Demo Mode') || error?.includes('unreachable');
 
     return (
         <div className="min-h-screen w-full flex bg-gray-50">
@@ -174,8 +177,20 @@ const Login = () => {
                         )}
 
                         {error && (
-                            <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm flex items-center gap-2">
-                                ⚠️ {error}
+                            <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm">
+                                <div className="flex items-center gap-2">
+                                    ⚠️ {error}
+                                </div>
+                                {showDemoButton && (
+                                    <button
+                                        type="button"
+                                        onClick={loginWithDemoUser}
+                                        className="mt-3 w-full flex items-center justify-center gap-2 py-2 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors"
+                                    >
+                                        <Play className="w-4 h-4" />
+                                        Enter Demo Mode
+                                    </button>
+                                )}
                             </div>
                         )}
 
@@ -200,7 +215,7 @@ const Login = () => {
                             <span className="w-full border-t border-gray-200" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                            <span className="bg-gray-50 px-2 text-gray-500">Or continue with</span>
                         </div>
                     </div>
 
@@ -216,6 +231,17 @@ const Login = () => {
                             className="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 text-sm font-medium text-gray-700"
                         >
                             <FaGithub className="w-5 h-5" /> GitHub
+                        </button>
+                    </div>
+
+                    {/* Quick Demo Access */}
+                    <div className="text-center">
+                        <button
+                            type="button"
+                            onClick={loginWithDemoUser}
+                            className="text-sm text-gray-500 hover:text-blue-600 hover:underline transition-colors"
+                        >
+                            Skip login and try Demo Mode →
                         </button>
                     </div>
 
