@@ -1,5 +1,8 @@
-import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
-import "./index.css";
+import { createRoot } from 'react-dom/client'
+import ReactModal from 'react-modal'
+import App from './App.tsx'
+import './index.css'
 
-createRoot(document.getElementById("root")!).render(<App />);
+const rootEl = document.getElementById("root")!
+ReactModal.setAppElement(rootEl)
+createRoot(rootEl).render(<App />);

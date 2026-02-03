@@ -1,0 +1,122 @@
+<!-- Configuration Mode -->
+<div class="compact-filter-config" *ngIf="isConfigMode">
+  <div class="config-header">
+    <h5>Compact Filter Configuration</h5>
+    <button class="btn btn-sm btn-link" (click)="cancelConfiguration()">
+      <clr-icon shape="close"></clr-icon>
+    </button>
+  </div>
+  
+  <div class="config-form">
+    <div class="clr-form-control">
+      <label class="clr-control-label">API URL</label>
+      <input type="text" [(ngModel)]="configApiUrl" (ngModelChange)="onApiUrlChange($event)" placeholder="Enter API URL" class="clr-input">
+    </div>
+    
+    <div class="clr-form-control">
+      <label class="clr-control-label">Filter Key</label>
+      <select [(ngModel)]="configFilterKey" (ngModelChange)="onFilterKeyChange($event)" class="clr-select">
+        <option value="">Select a key</option>
+        <option *ngFor="let key of availableKeys" [value]="key">{{ key }}</option>
+      </select>
+    </div>
+    
+    <div class="clr-form-control">
+      <label class="clr-control-label">Filter Type</label>
+      <select [(ngModel)]="configFilterType" (ngModelChange)="onFilterTypeChange($event)" class="clr-select">
+        <option value="text">Text</option>
+        <option value="dropdown">Dropdown</option>
+        <option value="multiselect">Multi-Select</option>
+        <option value="date-range">Date Range</option>
+        <option value="toggle">Toggle</option>
+      </select>
+    </div>
+    
+    <!-- Options will be automatically populated for dropdown/multiselect based on API data -->
+    <div class="clr-form-control" *ngIf="configFilterType === 'dropdown' || configFilterType === 'multiselect'">
+      <label class="clr-control-label">Available Values (comma separated)</label>
+      <div class="available-values">
+        {{ availableValues.join(', ') }}
+      </div>
+    </div>
+    
+    <div class="config-actions">
+      <button class="btn btn-sm btn-outline" (click)="cancelConfiguration()">Cancel</button>
+      <button class="btn btn-sm btn-primary" (click)="saveConfiguration()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Display Mode -->
+<div class="compact-filter" *ngIf="!isConfigMode">
+  <div class="filter-header">
+    <span class="filter-label" *ngIf="filterLabel">{{ filterLabel }}</span>
+    <span class="filter-key" *ngIf="!filterLabel && filterKey">{{ filterKey }}</span>
+    <span class="filter-type">({{ filterType }})</span>
+    <button class="btn btn-icon btn-sm" (click)="toggleConfigMode()">
+      <clr-icon shape="cog"></clr-icon>
+    </button>
+  </div>
+  
+  <!-- Text Filter -->
+  <div class="filter-control" *ngIf="filterType === 'text'">
+    <input type="text" 
+           [(ngModel)]="filterValue" 
+           (ngModelChange)="onFilterValueChange($event)"
+           [placeholder]="filterLabel || filterKey"
+           class="clr-input compact-input">
+  </div>
+
+  <!-- Dropdown Filter -->
+  <div class="filter-control" *ngIf="filterType === 'dropdown'">
+    <select [(ngModel)]="filterValue" 
+            (ngModelChange)="onFilterValueChange($event)"
+            class="clr-select compact-select">
+      <option value="">{{ filterLabel || filterKey }}</option>
+      <option *ngFor="let option of filterOptions" [value]="option">{{ option }}</option>
+    </select>
+  </div>
+
+  <!-- Multi-Select Filter -->
+  <div class="filter-control" *ngIf="filterType === 'multiselect'">
+    <div class="compact-multiselect-display" (click)="toggleMultiselectDropdown()" style="padding: 5px; border: 1px solid #ddd; cursor: pointer; background-color: #f8f8f8;">
+      <span *ngIf="filterValue && filterValue.length > 0">{{ filterValue.length }} selected</span>
+      <span *ngIf="!filterValue || filterValue.length === 0">{{ filterLabel || filterKey || 'Select options' }}</span>
+      <clr-icon shape="caret down" style="float: right; margin-top: 3px;"></clr-icon>
+    </div>
+    <div class="compact-multiselect-dropdown" *ngIf="showMultiselectDropdown" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-top: none; padding: 10px; background-color: white; position: absolute; z-index: 1000; width: calc(100% - 2px); box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <div *ngFor="let option of filterOptions" class="clr-checkbox-wrapper" style="margin-bottom: 5px;">
+        <input type="checkbox" 
+               [id]="'multiselect-' + option" 
+               [value]="option" 
+               [checked]="isOptionSelected(option)"
+               (change)="onMultiselectOptionChange($event, option)">
+        <label [for]="'multiselect-' + option" class="clr-control-label">{{ option }}</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Date Range Filter -->
+  <div class="filter-control date-range" *ngIf="filterType === 'date-range'">
+    <input type="date" 
+           [(ngModel)]="filterValue.start" 
+           (ngModelChange)="onDateRangeChange({ start: $event, end: filterValue.end })"
+           placeholder="Start Date"
+           class="clr-input compact-date">
+    <input type="date" 
+           [(ngModel)]="filterValue.end" 
+           (ngModelChange)="onDateRangeChange({ start: filterValue.start, end: $event })"
+           placeholder="End Date"
+           class="clr-input compact-date">
+  </div>
+
+  <!-- Toggle Filter -->
+  <div class="filter-control toggle" *ngIf="filterType === 'toggle'">
+    <input type="checkbox" 
+           [(ngModel)]="filterValue" 
+           (ngModelChange)="onToggleChange($event)"
+           clrToggle 
+           class="clr-toggle">
+    <label class="toggle-label">{{ filterLabel || filterKey }}</label>
+  </div>
+</div>

@@ -1,0 +1,296 @@
+<div class="chart-container" *ngIf="!noDataAvailable && !isLoading">
+  <!-- Back button for drilldown navigation -->
+  <div class="drilldown-back" *ngIf="currentDrilldownLevel > 0">
+    <button class="btn btn-sm btn-secondary" (click)="navigateBack()">
+      <clr-icon shape="arrow" dir="left"></clr-icon>
+      Back
+    </button>
+    <span class="drilldown-level">Level: {{ currentDrilldownLevel }}</span>
+  </div>
+
+  <!-- Chart title -->
+  <div class="chart-title" *ngIf="charttitle">
+    <h4>{{ charttitle }}</h4>
+  </div>
+
+  <!-- Filter toggle icon -->
+  <div class="filter-toggle-icon" *ngIf="hasFilters()" (click)="toggleFilters()">
+    <clr-icon shape="filter" size="24" 
+              [style.color]="showFilters ? '#007cba' : '#666'"
+              title="Toggle Filters">
+    </clr-icon>
+    <span>
+      {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
+    </span>
+  </div>
+
+  <!-- Render different chart types based on chartType input -->
+  <div class="chart-wrapper">
+    <!-- Dynamic Chart Container - uses extracted dynamic options and styles but static template -->
+    <div *ngIf="dynamicTemplate || chartType" class="chart-canvas-container">
+      <canvas baseChart
+        [datasets]="chartData"
+        [labels]="chartLabels"
+        [options]="chartOptions"
+        [legend]="chartLegend"
+        [type]="chartType || 'bar'"
+        (chartClick)="chartClicked($event)"
+        (chartHover)="chartHovered($event)">
+      </canvas>
+    </div>
+
+    <!-- Fallback for when no chart type is specified -->
+    <div *ngIf="!dynamicTemplate && !chartType" class="chart-canvas-container">
+      <canvas baseChart
+        [datasets]="chartData"
+        [labels]="chartLabels"
+        [options]="chartOptions"
+        [legend]="chartLegend"
+        [type]="'bar'"
+        (chartClick)="chartClicked($event)"
+        (chartHover)="chartHovered($event)">
+      </canvas>
+    </div>
+  </div>
+
+  <!-- Collapsible Base Filters -->
+  <div class="filters-section" *ngIf="baseFilters && baseFilters.length > 0 && showFilters">
+    <h5>Filters</h5>
+    <div class="filters-container">
+      <div class="filter-item" *ngFor="let filter of baseFilters; let i = index">
+        <!-- Text Filter -->
+        <div *ngIf="!filter.type || filter.type === 'text'" class="filter-text">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <input type="text" [(ngModel)]="filter.value" (ngModelChange)="onBaseFilterChange(filter)" 
+                 class="form-control" placeholder="Enter {{ filter.field || 'value' }}">
+        </div>
+
+        <!-- Dropdown Filter -->
+        <div *ngIf="filter.type === 'dropdown'" class="filter-dropdown">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <select [(ngModel)]="filter.value" (ngModelChange)="onBaseFilterChange(filter)" class="form-control">
+            <option value="">Select {{ filter.field || 'value' }}</option>
+            <option *ngFor="let option of getFilterOptions(filter)" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Multiselect Filter -->
+        <div *ngIf="filter.type === 'multiselect'" class="filter-multiselect">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <div class="multiselect-container">
+            <div class="multiselect-display" (click)="toggleMultiselect(filter, 'base')">
+              <span *ngIf="!filter.value || (Array.isArray(filter.value) && filter.value.length === 0)">Select {{ filter.field || 'options' }}</span>
+              <span *ngIf="filter.value && !Array.isArray(filter.value)">
+                {{ filter.value }}
+              </span>
+              <span *ngIf="filter.value && Array.isArray(filter.value) && filter.value.length > 0">
+                {{ filter.value.length }} selected
+              </span>
+            </div>
+            <div class="multiselect-dropdown" *ngIf="isMultiselectOpen(filter, 'base')">
+              <div class="multiselect-option" *ngFor="let option of getFilterOptions(filter)">
+                <input type="checkbox" 
+                       [checked]="isOptionSelected(filter, option)"
+                       (change)="onMultiSelectChange(filter, option, $event)"
+                       id="base-{{ filter.field }}-{{ option }}">
+                <label [for]="'base-' + filter.field + '-' + option">{{ option }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div *ngIf="filter.type === 'date-range'" class="filter-date-range">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <div class="date-range-inputs">
+            <input type="date" [(ngModel)]="filter.value.start" (ngModelChange)="onDateRangeInputChange(filter, 'start', $event)" 
+                   class="form-control" placeholder="Start Date">
+            <input type="date" [(ngModel)]="filter.value.end" (ngModelChange)="onDateRangeInputChange(filter, 'end', $event)" 
+                   class="form-control" placeholder="End Date">
+          </div>
+        </div>
+
+        <!-- Toggle Filter -->
+        <div *ngIf="filter.type === 'toggle'" class="filter-toggle">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <div class="toggle-switch">
+            <input type="checkbox" [(ngModel)]="filter.value" (ngModelChange)="onToggleChange(filter, $event.target.checked)" 
+                   id="toggle-{{ filter.field }}">
+            <label [for]="'toggle-' + filter.field" class="toggle-label">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drilldown Filters -->
+  <div class="filters-section" *ngIf="drilldownFilters && drilldownFilters.length > 0 && currentDrilldownLevel > 0 && showFilters">
+    <h5>Drilldown Filters</h5>
+    <div class="filters-container">
+      <div class="filter-item" *ngFor="let filter of drilldownFilters; let i = index">
+        <!-- Text Filter -->
+        <div *ngIf="!filter.type || filter.type === 'text'" class="filter-text">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <input type="text" [(ngModel)]="filter.value" (ngModelChange)="onDrilldownFilterChange(filter)" 
+                 class="form-control" placeholder="Enter {{ filter.field || 'value' }}">
+        </div>
+
+        <!-- Dropdown Filter -->
+        <div *ngIf="filter.type === 'dropdown'" class="filter-dropdown">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <select [(ngModel)]="filter.value" (ngModelChange)="onDrilldownFilterChange(filter)" class="form-control">
+            <option value="">Select {{ filter.field || 'value' }}</option>
+            <option *ngFor="let option of getFilterOptions(filter)" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Multiselect Filter -->
+        <div *ngIf="filter.type === 'multiselect'" class="filter-multiselect">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <div class="multiselect-container">
+            <div class="multiselect-display" (click)="toggleMultiselect(filter, 'drilldown')">
+              <span *ngIf="!filter.value || (Array.isArray(filter.value) && filter.value.length === 0)">Select {{ filter.field || 'options' }}</span>
+              <span *ngIf="filter.value && !Array.isArray(filter.value)">
+                {{ filter.value }}
+              </span>
+              <span *ngIf="filter.value && Array.isArray(filter.value) && filter.value.length > 0">
+                {{ filter.value.length }} selected
+              </span>
+            </div>
+            <div class="multiselect-dropdown" *ngIf="isMultiselectOpen(filter, 'drilldown')">
+              <div class="multiselect-option" *ngFor="let option of getFilterOptions(filter)">
+                <input type="checkbox" 
+                       [checked]="isOptionSelected(filter, option)"
+                       (change)="onMultiSelectChange(filter, option, $event)"
+                       id="drilldown-{{ filter.field }}-{{ option }}">
+                <label [for]="'drilldown-' + filter.field + '-' + option">{{ option }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div *ngIf="filter.type === 'date-range'" class="filter-date-range">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <div class="date-range-inputs">
+            <input type="date" [(ngModel)]="filter.value.start" (ngModelChange)="onDateRangeInputChange(filter, 'start', $event)" 
+                   class="form-control" placeholder="Start Date">
+            <input type="date" [(ngModel)]="filter.value.end" (ngModelChange)="onDateRangeInputChange(filter, 'end', $event)" 
+                   class="form-control" placeholder="End Date">
+          </div>
+        </div>
+
+        <!-- Toggle Filter -->
+        <div *ngIf="filter.type === 'toggle'" class="filter-toggle">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <div class="toggle-switch">
+            <input type="checkbox" [(ngModel)]="filter.value" (ngModelChange)="onToggleChange(filter, $event.target.checked)" 
+                   id="drilldown-toggle-{{ filter.field }}">
+            <label [for]="'drilldown-toggle-' + filter.field" class="toggle-label">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layer Filters -->
+  <div class="filters-section" *ngIf="hasActiveLayerFilters() && showFilters">
+    <h5>Layer Filters</h5>
+    <div class="filters-container">
+      <div class="filter-item" *ngFor="let filter of getActiveLayerFilters(); let i = index">
+        <!-- Text Filter -->
+        <div *ngIf="!filter.type || filter.type === 'text'" class="filter-text">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <input type="text" [(ngModel)]="filter.value" (ngModelChange)="onLayerFilterChange(filter)" 
+                 class="form-control" placeholder="Enter {{ filter.field || 'value' }}">
+        </div>
+
+        <!-- Dropdown Filter -->
+        <div *ngIf="filter.type === 'dropdown'" class="filter-dropdown">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <select [(ngModel)]="filter.value" (ngModelChange)="onLayerFilterChange(filter)" class="form-control">
+            <option value="">Select {{ filter.field || 'value' }}</option>
+            <option *ngFor="let option of getFilterOptions(filter)" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Multiselect Filter -->
+        <div *ngIf="filter.type === 'multiselect'" class="filter-multiselect">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <div class="multiselect-container">
+            <div class="multiselect-display" (click)="toggleMultiselect(filter, 'layer')">
+              <span *ngIf="!filter.value || (Array.isArray(filter.value) && filter.value.length === 0)">Select {{ filter.field || 'options' }}</span>
+              <span *ngIf="filter.value && !Array.isArray(filter.value)">
+                {{ filter.value }}
+              </span>
+              <span *ngIf="filter.value && Array.isArray(filter.value) && filter.value.length > 0">
+                {{ filter.value.length }} selected
+              </span>
+            </div>
+            <div class="multiselect-dropdown" *ngIf="isMultiselectOpen(filter, 'layer')">
+              <div class="multiselect-option" *ngFor="let option of getFilterOptions(filter)">
+                <input type="checkbox" 
+                       [checked]="isOptionSelected(filter, option)"
+                       (change)="onMultiSelectChange(filter, option, $event)"
+                       id="layer-{{ filter.field }}-{{ option }}">
+                <label [for]="'layer-' + filter.field + '-' + option">{{ option }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div *ngIf="filter.type === 'date-range'" class="filter-date-range">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <div class="date-range-inputs">
+            <input type="date" [(ngModel)]="filter.value.start" (ngModelChange)="onDateRangeInputChange(filter, 'start', $event)" 
+                   class="form-control" placeholder="Start Date">
+            <input type="date" [(ngModel)]="filter.value.end" (ngModelChange)="onDateRangeInputChange(filter, 'end', $event)" 
+                   class="form-control" placeholder="End Date">
+          </div>
+        </div>
+
+        <!-- Toggle Filter -->
+        <div *ngIf="filter.type === 'toggle'" class="filter-toggle">
+          <label>{{ filter.field || 'Filter ' + (i + 1) }}</label>
+          <div class="toggle-switch">
+            <input type="checkbox" [(ngModel)]="filter.value" (ngModelChange)="onToggleChange(filter, $event.target.checked)" 
+                   id="layer-toggle-{{ filter.field }}">
+            <label [for]="'layer-toggle-' + filter.field" class="toggle-label">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Filters Button -->
+  <div class="clear-filters" *ngIf="hasActiveFilters() && showFilters">
+    <button class="btn btn-sm btn-outline" (click)="clearAllFilters()">
+      Clear All Filters
+    </button>
+  </div>
+</div>
+
+<!-- No Data Available Message -->
+<div class="no-data-message" *ngIf="noDataAvailable && !isLoading">
+  <p>No data available for the selected filters.</p>
+  <button class="btn btn-sm btn-primary" (click)="fetchChartData()">Retry</button>
+</div>
+
+<!-- Loading Indicator -->
+<div class="loading-indicator" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <p>Loading chart data...</p>
+</div>

@@ -1,0 +1,156 @@
+<ol class="breadcrumb breadcrumb-arrow font-trirong">
+  <li><a href="javascript://" [routerLink]="['/cns-portal/dashboard/order']"><clr-icon shape="home"></clr-icon></a></li>
+  <li><a href="javascript://"><clr-icon shape="dashboard"></clr-icon> {{ 'Dashboard_builder' | translate }}</a></li>
+</ol>
+
+<br>
+
+<div class="dg-wrapper">
+  <div class="clr-row">
+    <div class="clr-col-8">x
+      <h3>{{ 'Dashboard_builder' | translate }}</h3>
+    </div>
+    <div class="clr-col-4" style="text-align: right;">
+      <button class="btn btn-success" [routerLink]="['/cns-portal/shield-dashboard']">
+        <clr-icon shape="shield"></clr-icon>Shield Dashboard
+      </button>
+      <button id="add" class="btn btn-primary" (click)="gotorunner()">
+        <clr-icon shape="grid-view"></clr-icon>{{ 'Dashboard_runner' | translate }}
+      </button>
+      <!-- Add Chart Config button -->
+      <button class="btn btn-primary" (click)="openChartConfig()">
+        <clr-icon shape="cog"></clr-icon> Chart Config
+      </button>
+      <button class="btn btn-outline" (click)="onExport()">
+        <clr-icon shape="export"></clr-icon> {{ 'EXPORT_XLSX' | translate }}
+      </button>
+      <button id="add" class="btn btn-primary" (click)="gotoadd()">
+        <clr-icon shape="plus"></clr-icon> {{ 'ADD' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <clr-datagrid [clrDgLoading]="loading">
+    <clr-dg-placeholder><ng-template #loadingSpinner><clr-spinner>{{ 'Loading' | translate }} ......
+        </clr-spinner></ng-template>
+      <div *ngIf="error;else loadingSpinner">{{error}}</div>
+    </clr-dg-placeholder>
+
+    <clr-dg-column [clrDgField]="''">
+      <ng-container *clrDgHideableColumn="{hidden: false}">
+        {{ 'Go_to' | translate }}
+      </ng-container>
+    </clr-dg-column>
+    <clr-dg-column [clrDgField]="'dashboard_name'">
+      <ng-container *clrDgHideableColumn="{hidden: false}">
+        {{ 'Dashboard_Name' | translate }}
+      </ng-container>
+    </clr-dg-column>
+    <clr-dg-column [clrDgField]="'description'">
+      <ng-container *clrDgHideableColumn="{hidden: false}">
+        {{ 'Description' | translate }}
+      </ng-container>
+    </clr-dg-column>
+    <clr-dg-column [clrDgField]="'secuirity_profile'">
+      <ng-container *clrDgHideableColumn="{hidden: false}">
+        {{ 'Security_Profile' | translate }}
+      </ng-container>
+    </clr-dg-column>
+    <clr-dg-column [clrDgField]="'add_to_home'">
+      <ng-container *clrDgHideableColumn="{hidden: false}">
+        {{ 'Add_to_home' | translate }}
+      </ng-container>
+    </clr-dg-column>
+    <!-- <clr-dg-column [clrDgField]="'formType'">
+            <ng-container *clrDgHideableColumn="{hidden: false}">
+              Build Status
+            </ng-container> 
+          </clr-dg-column >
+            <clr-dg-column [clrDgField]="'testing'">
+              <ng-container *clrDgHideableColumn="{hidden: false}">
+                Testing
+              </ng-container> 
+            </clr-dg-column > -->
+    <clr-dg-column [clrDgField]="'action'"> <ng-container *clrDgHideableColumn="{hidden: false}">
+        {{ 'Action' | translate }}
+      </ng-container></clr-dg-column>
+
+    <clr-dg-row *clrDgItems="let user of data?.slice()?.reverse();" [clrDgItem]="user">
+      <clr-dg-cell><span class="label label-light-blue" style="display: inline;margin-left: 10px; cursor: pointer;"
+          (click)="goToEdit(user.id)"> {{ 'SET_UP' | translate }}</span></clr-dg-cell>
+      <clr-dg-cell>{{user.dashboard_name}}</clr-dg-cell>
+      <clr-dg-cell>{{user.description}}</clr-dg-cell>
+      <clr-dg-cell>{{user.secuirity_profile}}</clr-dg-cell>
+      <clr-dg-cell>{{user.add_to_home}}</clr-dg-cell>
+
+      <!-- <clr-dg-cell><input type="radio" id="cb1" class="dots" [ngStyle]="{'background-color': user.build == true ? 'green' : 'red'}"></clr-dg-cell>
+        <clr-dg-cell>{{user.testing}}</clr-dg-cell> -->
+      <clr-dg-cell>
+        <!-- <span style="cursor: pointer; padding: 10px; "><clr-icon shape="form"  (click)="goToEdit(user.id)" class="success" style="color: rgb(0, 130, 236);"></clr-icon></span> -->
+        <a href="javascript:void(0)" style="padding-right: 10px;" role="tooltip" aria-haspopup="true"
+          class="tooltip tooltip-sm tooltip-top-left">
+          <span style="cursor: pointer;"><clr-icon shape="trash" (click)="onDelete(user)" class="red is-error"
+              style="color: red;"></clr-icon></span>
+          <span class="tooltip-content">{{ 'Delete' | translate }}</span>
+        </a>
+
+        <clr-signpost>
+          <span style="cursor: pointer;" clrSignpostTrigger><clr-icon shape="help" class="success"
+              style="color: rgb(0, 130, 236);"></clr-icon></span>
+          <clr-signpost-content [clrPosition]="'left-middle'" *clrIfOpen>
+            <h5 style="margin-top: 0">{{ 'Who_Column' | translate }}</h5>
+            <div>{{ 'Account_ID' | translate }}: <code class="clr-code">{{ user.accountId }}</code></div>
+            <div>{{ 'Created_At' | translate }}: <code class="clr-code">{{ user.createdAt | date }}</code></div>
+            <div>{{ 'Created_By' | translate }}: <code class="clr-code">{{ user.createdBy }}</code></div>
+            <div>{{ 'Updated_At' | translate }}: <code class="clr-code">{{ user.updatedAt | date }}</code></div>
+            <div>{{ 'Updated_By' | translate }}: <code class="clr-code">{{ user.updatedBy }}</code></div>
+          </clr-signpost-content>
+        </clr-signpost>
+
+      </clr-dg-cell>
+      <clr-dg-action-overflow>
+        <button class="action-item" (click)="goToEditData(user.id)">{{ 'Edit' | translate }} <clr-icon shape="edit"
+            class="is-error"></clr-icon></button>
+        <!-- <button class="action-item" (click)="onDelete(user)">Delete<clr-icon shape="trash" class="is-error"></clr-icon></button> -->
+      </clr-dg-action-overflow>
+    </clr-dg-row>
+
+    <clr-dg-footer>
+      <clr-dg-pagination #pagination [clrDgPageSize]="10">
+        <clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">{{ 'Users_per_page' | translate }}</clr-dg-page-size>
+        {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}}
+        {{ 'of' | translate }} {{pagination.totalItems}} {{ 'users' | translate }}
+      </clr-dg-pagination>
+    </clr-dg-footer>
+  </clr-datagrid>
+</div>
+
+<clr-modal [(clrModalOpen)]="addModall" [clrModalSize]="'lg'" [clrModalStaticBackdrop]="true">
+  <div class="modal-body">
+    <div class="s-order-dash-pg">
+      <div class="chart-box" id="word1" (click)="gotoadd()"><br>
+        <img style="margin: auto; display: block;" src="/assets/images/fromscratch.png" height="90" width="90">
+        <h5 class="center"> <b>{{ 'Start_from_scratch' | translate }}</b> </h5>
+      </div>
+      <div class="chart-box" id="word1"><br>
+        <img style="margin: auto; display: block;" src="/assets/images/copytemplate.png" height="90" width="90">
+        <h5 class="center"> <b>{{ 'Import_from_template' | translate }}</b> </h5>
+      </div>
+      <div class="chart-box" id="word1"><br>
+        <img style="margin: auto; display: block;" src="/assets/images/database.png" height="90" width="90">
+        <h5 class="center"> <b>{{ 'Import_from_public_project' | translate }}</b> </h5>
+      </div>
+    </div>
+  </div>
+</clr-modal>
+
+<clr-modal [(clrModalOpen)]="modalDelete" [clrModalSize]="'lg'" [clrModalStaticBackdrop]="true">
+  <div class="modal-body" *ngIf="rowSelected.id">
+    <h1 class="delete">{{ 'Are_you_sure_want_to_delete' | translate }}</h1>
+    <h2 class="heading">{{rowSelected.id}}</h2>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" (click)="modalDelete = false">{{ 'Cancel' | translate }}</button>
+      <button type="submit" (click)="delete(rowSelected.id)" class="btn btn-primary">{{ 'Delete' | translate }}</button>
+    </div>
+  </div>
+</clr-modal>
