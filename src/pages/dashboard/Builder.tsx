@@ -1,5 +1,5 @@
 import React from 'react';
-import DashboardEditor from '../../components/dashboard/DashboardEditor';
+import DashboardEditor from '../../modules/dashboard/editor/DashboardEditor';
 
 const Builder = () => {
     return <DashboardEditor />;

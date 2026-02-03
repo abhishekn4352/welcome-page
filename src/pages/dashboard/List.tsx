@@ -1,5 +1,5 @@
 import React from 'react';
-import DashboardList from '../../components/dashboard/DashboardList';
+import DashboardList from '../../modules/dashboard/list/DashboardList';
 import { Link } from 'react-router-dom';
 
 const List = () => {
