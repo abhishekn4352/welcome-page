@@ -1,5 +1,4 @@
 import { api } from './api';
-import { Rn_Forms_Setup } from '../types'; // We might need to define this type or find where it is
 
 // Define types based on usage if not available globally
 export interface RnFormsSetup {
@@ -8,7 +7,6 @@ export interface RnFormsSetup {
     description?: string;
     components?: RnFormsComponentSetup[];
     button_caption?: string;
-    // Add other fields as per Angular model
 }
 
 export interface RnFormsComponentSetup {
@@ -18,7 +16,6 @@ export interface RnFormsComponentSetup {
     mandatory?: string | boolean;
     readonly?: string | boolean;
     drop_values?: string;
-    // Add other fields
 }
 
 class DynamicFormService {
@@ -65,20 +62,7 @@ class DynamicFormService {
 
     // Update a record
     updateTransaction(id: number, formId: number, data: any) {
-        return api.put(`${this.transactionURL}/${id}`, data, { form_id: formId } as any); // Note: ApiService put params handling needs verification, might need query string manually if body is second arg
-        // Looking at api.ts, put signature is (endpoint, body). It doesn't accept params. 
-        // But the backend expects form_id as param for update? 
-        // Angular service: params = params.append('form_id', form_id.toString()); this.apiRequest.put('api/dynamic_transaction/' + id, data, params);
-        // React ApiService.put doesn't support query params in arguments.
-        // We will append it to URL.
-    }
-
-    updateTransactionWithParam(id: number, formId: number, data: any) {
-        return api.request(`${this.transactionURL}/${id}?form_id=${formId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-            body: JSON.stringify(data)
-        });
+        return api.put(`${this.transactionURL}/${id}?form_id=${formId}`, data);
     }
 
     // Delete a record

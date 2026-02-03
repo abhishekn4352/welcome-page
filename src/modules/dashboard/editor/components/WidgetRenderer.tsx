@@ -1,5 +1,5 @@
 import React from 'react';
-import { Widget, WidgetType } from '../../types/dashboard';
+import { Widget, WidgetType } from '../../types';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 interface WidgetRendererProps {
